@@ -1,77 +1,87 @@
 package com.example.cardiocare;
 
 public class Record {
-    private int systolicPressure,diastolicPressure,heartRate;
-    private String timeMeasured,dateMeasured,comment;
 
-    public Record(int systolicPressure,
-                  int diastolicPressure,
-                  int heartRate,
-                  String timeMeasured,
-                  String dateMeasured,
-                  String comment) {
-        this.systolicPressure = systolicPressure;
-        this.diastolicPressure = diastolicPressure;
-        this.heartRate = heartRate;
-        this.timeMeasured = timeMeasured;
-        this.dateMeasured = dateMeasured;
-        this.comment = comment;
-    }
-    public Record(Record record){
-        systolicPressure = record.getSystolicPressure();
-        diastolicPressure = record.getDiastolicPressure();
-        heartRate = record.getHeartRate();
-        timeMeasured = record.getTimeMeasured();
-        dateMeasured = record.getDateMeasured();
-        comment = record.getComment();
+    private String passeduser,id;
+    private String date;
+    private String time;
+    private String sys;
+    private String dis;
+    private String bpm;
+    private String cmnt;
+
+    public Record(String passeduser, String id, String date, String time, String sys, String dis, String bpm, String cmnt) {
+        this.passeduser = passeduser;
+        this.id = id;
+        this.date = date;
+        this.time = time;
+        this.sys = sys;
+        this.dis = dis;
+        this.bpm = bpm;
+        this.cmnt = cmnt;
     }
 
-    public int getSystolicPressure() {
-        return systolicPressure;
+    public String getPasseduser() {
+        return passeduser;
     }
 
-    public void setSystolicPressure(int systolicPressure) {
-        this.systolicPressure = systolicPressure;
+    public void setPasseduser(String passeduser) {
+        this.passeduser = passeduser;
     }
 
-    public int getDiastolicPressure() {
-        return diastolicPressure;
+    public String getId() {
+        return id;
     }
 
-    public void setDiastolicPressure(int diastolicPressure) {
-        this.diastolicPressure = diastolicPressure;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public int getHeartRate() {
-        return heartRate;
+    public String getDate() {
+        return date;
     }
 
-    public void setHeartRate(int heartRate) {
-        this.heartRate = heartRate;
+    public void setDate(String date) {
+        this.date = date;
     }
 
-    public String getTimeMeasured() {
-        return timeMeasured;
+    public String getTime() {
+        return time;
     }
 
-    public void setTimeMeasured(String timeMeasured) {
-        this.timeMeasured = timeMeasured;
+    public void setTime(String time) {
+        this.time = time;
     }
 
-    public String getDateMeasured() {
-        return dateMeasured;
+    public String getSys() {
+        return sys;
     }
 
-    public void setDateMeasured(String dateMeasured) {
-        this.dateMeasured = dateMeasured;
+    public void setSys(String sys) {
+        this.sys = sys;
     }
 
-    public String getComment() {
-        return comment;
+    public String getDis() {
+        return dis;
     }
 
-    public void setComment(String comment) {
-        this.comment = comment;
+    public void setDis(String dis) {
+        this.dis = dis;
     }
 
+    public String getBpm() {
+        return bpm;
+    }
+
+    public void setBpm(String bpm) {
+        this.bpm = bpm;
+    }
+
+    public String getCmnt() {
+        return cmnt;
+    }
+
+    public void setCmnt(String cmnt) {
+        this.cmnt = cmnt;
+    }
 }

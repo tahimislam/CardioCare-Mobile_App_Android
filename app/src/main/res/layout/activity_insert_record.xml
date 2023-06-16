@@ -1,201 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
     android:layout_width="match_parent"
-    tools:context=".activities.InsertRecordActiviy">
+    android:layout_height="match_parent"
+    android:background="@color/white"
+    tools:context=".InsertRecordActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <EditText
+        android:id="@+id/cmnttext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Comment(if any)"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bpmtext" />
 
-        <TextView
-            android:id="@+id/coe_record_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="32dp"
-            android:text="Create Record"
-            android:textStyle="bold"
+    <EditText
+        android:id="@+id/systext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Systolic Pressure"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/timetext" />
 
-            android:textSize="20sp"
-            android:textColor="@color/black"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <EditText
+        android:id="@+id/bpmtext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Heart Rate(bpm)"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/distext" />
 
-        <Button
-            android:id="@+id/coe_record_action_button"
-            android:layout_width="116dp"
-            android:layout_height="56dp"
-            android:layout_marginEnd="24dp"
-            android:text="Save"
-            android:backgroundTint="@color/black"
+    <EditText
+        android:id="@+id/timetext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Time"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/datetext" />
 
-            android:textSize="16sp"
-            android:textAllCaps="false"
-            android:textAlignment="center"
-            app:layout_constraintBottom_toBottomOf="@+id/coe_record_title"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/coe_record_title" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    <EditText
+        android:id="@+id/datetext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="36dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Date"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView6" />
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="24dp">
+    <TextView
+        android:id="@+id/textView6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="116dp"
+        android:text="Insert Record"
+        android:textAlignment="center"
+        android:textSize="40dp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
+    <EditText
+        android:id="@+id/distext"
+        android:layout_width="332dp"
+        android:layout_height="43dp"
+        android:layout_marginTop="16dp"
+        android:ems="10"
+        android:inputType="text"
+        android:hint="Diastolic Pressure"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/systext" />
 
+    <Button
+        android:id="@+id/addbutton"
+        android:layout_width="100dp"
+        android:layout_height="55dp"
+        android:layout_marginTop="60dp"
+        android:backgroundTint="@color/black"
+        android:textColor="@color/white"
+        android:text="Add"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cmnttext" />
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_systolic_edit_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Systolic pressure"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_systolic_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:inputType="numberSigned"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_diastolic_edit_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Diastolic pressure"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_diastolic_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:inputType="numberSigned"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_heart_rate_edit_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Heart rate"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_heart_rate_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:inputType="numberSigned"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_time_measured_edit_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Time measured"
-                app:endIconMode="custom"
-                app:endIconDrawable="@drawable/baseline_access_time_24"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
-
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_time_measured_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:inputType="time"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_date_edit_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Date measured"
-                android:textSize="16sp"
-                app:endIconMode="custom"
-                app:endIconDrawable="@drawable/baseline_calendar_month_24"
-                android:layout_marginBottom="16dp"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_date_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:inputType="date"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/coe_record_date_comment_text_layout"
-                android:layout_height="wrap_content"
-                android:layout_width="match_parent"
-                android:layout_marginLeft="24dp"
-                android:layout_marginRight="24dp"
-                android:hint="Comment"
-                android:textSize="16sp"
-                android:layout_marginBottom="16dp"
-                app:counterMaxLength="20"
-                app:counterEnabled="true"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                >
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/coe_record_comment_edit_text_input"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:minHeight="56dp"
-
-                    android:textColor="@color/black"
-                    android:backgroundTint="@color/white"
-                    android:minLines="2"
-                    android:lines="2"
-
-                    android:inputType="textMultiLine"
-                    />
-            </com.google.android.material.textfield.TextInputLayout>
-
-        </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

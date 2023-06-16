@@ -5,6 +5,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:cardElevation="6dp"
     android:fadingEdge="horizontal"
+    android:id="@+id/recCard"
     android:layout_marginTop="16dp"
     android:layout_marginLeft="8dp"
     android:layout_marginRight="8dp"
@@ -208,7 +209,7 @@
                 android:orientation="horizontal" />
 
             <Button
-                android:id="@+id/r_r_v_i_delete_button"
+                    android:id="@+id/r_r_v_i_delete_button"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_weight="1"
