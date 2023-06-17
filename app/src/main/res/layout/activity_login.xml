@@ -96,13 +96,14 @@
                 app:layout_constraintEnd_toEndOf="@+id/logpass"
                 app:layout_constraintTop_toBottomOf="@+id/logpass" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/logbtn"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="48dp"
-                android:background="@drawable/btn"
+                android:backgroundTint="#FB3F31"
                 android:text="Login"
+                android:background="@drawable/btn"
                 android:textColor="@color/white"
                 android:textSize="18sp"
                 app:layout_constraintEnd_toEndOf="@+id/forgotpass"
@@ -186,7 +187,7 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView" />
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/googlebtn"
                 android:layout_width="150dp"
                 android:layout_height="50dp"
@@ -195,9 +196,9 @@
                 app:layout_constraintHorizontal_chainStyle="packed"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView3"
+                android:drawableTop="@drawable/googlett"
                 android:background="@drawable/googlebtn"
-                android:paddingTop="12dp"
-                android:drawableTop="@drawable/googlett"/>
+                android:paddingTop="12dp" />
 
             <ProgressBar
                 android:id="@+id/progbar"
