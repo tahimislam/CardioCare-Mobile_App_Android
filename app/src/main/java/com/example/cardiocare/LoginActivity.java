@@ -176,7 +176,7 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
 
-                Intent intent=new Intent(LoginActivity.this, RecordActivity.class);
+                Intent intent=new Intent(LoginActivity.this, VerifyOTP1Activity.class);
                 Toast.makeText(LoginActivity.this, "Please Verify User!", Toast.LENGTH_LONG).show();
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
                         | Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -206,7 +206,7 @@ public class LoginActivity extends AppCompatActivity {
 //                    if(curruser.isEmailVerified())
 //                    {
                             Toast.makeText(LoginActivity.this, "Please Verify User!", Toast.LENGTH_LONG).show();
-                            Intent intent=new Intent(LoginActivity.this, RecordActivity.class);
+                            Intent intent=new Intent(LoginActivity.this, VerifyOTP1Activity.class);
 
                             //To prevent user from returning back to Login Activity on pressing back button after Login
                             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK

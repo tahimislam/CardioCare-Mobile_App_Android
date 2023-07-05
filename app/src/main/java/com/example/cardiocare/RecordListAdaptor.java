@@ -69,7 +69,7 @@ public class RecordListAdaptor extends RecyclerView.Adapter<RecordListAdaptor.Re
         holder.viewButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(context, HomeActivity.class);
+                Intent intent = new Intent(context, RecordDetailsActivity.class);
                 intent.putExtra("index",position);
 
                 context.startActivity(intent);
@@ -82,7 +82,7 @@ public class RecordListAdaptor extends RecyclerView.Adapter<RecordListAdaptor.Re
             public void onClick(View view) {
 
 //                Toast.makeText(context, "okay" + String.valueOf(position), Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(context, HomeActivity.class);
+                Intent intent = new Intent(context, InsertRecordActivity.class);
 
                 intent.putExtra("index",position);
                 context.startActivity(intent);
