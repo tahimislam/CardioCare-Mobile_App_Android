@@ -1,0 +1,1930 @@
+package com.example.cardiocare;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.annotation.SuppressLint;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
+import android.util.Patterns;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.textfield.TextInputLayout;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthInvalidUserException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthCredential;
+import com.google.firebase.auth.GoogleAuthProvider;
+
+public class LoginActivity extends AppCompatActivity {
+
+    private EditText user,pass;
+    private TextView regbtn,forgotbtn;
+    private Button logbtn,googlebtn;
+    private ProgressBar progbar;
+    private FirebaseAuth authProfile;
+    private static final String TAG="LoginActivity";
+    boolean vispass;
+
+    private GoogleSignInOptions googleSignInOptions;
+    private GoogleSignInClient googleSignInClient;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_login);
+        getSupportActionBar().hide();
+
+        user=findViewById(R.id.user);
+        pass=findViewById(R.id.logpass);
+        forgotbtn=findViewById(R.id.forgotpass);
+        regbtn=(TextView) findViewById(R.id.register);
+        logbtn=(Button)findViewById(R.id.logbtn);
+        googlebtn=findViewById(R.id.googlebtn);
+        progbar=findViewById(R.id.progbar);
+
+        authProfile = FirebaseAuth.getInstance();
+
+        //Toggle password visibility
+        pass.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                final int flag=2;
+                if(motionEvent.getAction()==MotionEvent.ACTION_UP)
+                {
+                    if(motionEvent.getRawX()>=pass.getRight()-pass.getCompoundDrawables()[flag].getBounds().width())
+                    {
+                        int select=pass.getSelectionEnd();
+                        if(vispass)
+                        {
+                            pass.setCompoundDrawablesRelativeWithIntrinsicBounds(0,0,R.drawable.ic_baseline_visibility_24,0);
+
+                            pass.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                            vispass=false;
+                        }
+                        else
+                        {
+                            pass.setCompoundDrawablesRelativeWithIntrinsicBounds(0,0,R.drawable.ic_baseline_visibility_off_24,0);
+
+                            pass.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                            vispass=true;
+                        }
+                        pass.setSelection(select);
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
+
+        googleSignInOptions=new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).requestEmail().build();
+        googleSignInClient= GoogleSignIn.getClient(this,googleSignInOptions);
+
+        googlebtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent signin=googleSignInClient.getSignInIntent();
+                startActivityForResult(signin,1000);
+            }
+        });
+
+        logbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                String temail=user.getText().toString().trim();
+                String tpass=pass.getText().toString().trim();
+
+                if(TextUtils.isEmpty(temail))
+                {
+                    Toast.makeText(LoginActivity.this,"Please enter your email",Toast.LENGTH_LONG).show();
+                    user.setError("Email is required");
+                    user.requestFocus();
+                }
+                else if(!Patterns.EMAIL_ADDRESS.matcher(temail).matches())
+                {
+                    Toast.makeText(LoginActivity.this,"Please re-enter your email",Toast.LENGTH_LONG).show();
+                    user.setError("Valid email is required");
+                    user.requestFocus();
+                }
+                else if(TextUtils.isEmpty(tpass))
+                {
+                    Toast.makeText(LoginActivity.this,"Please enter password",Toast.LENGTH_LONG).show();
+                    pass.setError("Password is required");
+                    pass.requestFocus();
+                }
+                else
+                {
+                    progbar.setVisibility(View.VISIBLE);
+                    loginuser(temail,tpass);
+                }
+            }
+        });
+
+
+        //Reset Password
+        forgotbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(LoginActivity.this, ForgotpassActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        //Register user
+        regbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(LoginActivity.this, RegisterActivity.class);
+                startActivity(intent);
+            }
+        });
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        progbar.setVisibility(View.VISIBLE);
+        if(requestCode==1000)
+        {
+            Task<GoogleSignInAccount> task =GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+
+                Intent intent=new Intent(LoginActivity.this, VerifyOTP1Activity.class);
+                Toast.makeText(LoginActivity.this, "Please Verify User!", Toast.LENGTH_LONG).show();
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+
+                finish();               //To close Login Activity
+                progbar.setVisibility(View.GONE);
+
+            } catch (ApiException e) {
+                Toast.makeText(LoginActivity.this,"Something went wrong!",Toast.LENGTH_LONG).show();
+                progbar.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void loginuser(String email, String pass) {
+        authProfile.signInWithEmailAndPassword(email,pass).addOnCompleteListener(LoginActivity.this,
+                new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful())
+                        {
+                            //Get instance of the current user
+                            FirebaseUser curruser=authProfile.getCurrentUser();
+
+                            //Check if email is verified
+//                    if(curruser.isEmailVerified())
+//                    {
+                            Toast.makeText(LoginActivity.this, "Please Verify User!", Toast.LENGTH_LONG).show();
+                            Intent intent=new Intent(LoginActivity.this, VerifyOTP1Activity.class);
+
+                            //To prevent user from returning back to Login Activity on pressing back button after Login
+                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+
+                            finish();               //To close Login Activity
+//                    }
+//                    else
+//                    {
+//                        curruser.sendEmailVerification();
+//                        authProfile.signOut();
+//                        Alertbox();
+//                    }
+                        }
+                        else
+                        {
+                            try{
+                                throw task.getException();
+                            }
+                            catch (FirebaseAuthInvalidUserException e){
+                                user.setError("User does not exist or no longer valid. Please register again!");
+                                user.requestFocus();
+                            }
+                            catch (FirebaseAuthInvalidCredentialsException e){
+                                Toast.makeText(LoginActivity.this, "Login Failed! Incorrect password or email", Toast.LENGTH_LONG).show();
+                            }
+                            catch (Exception e){
+                                Log.e(TAG, e.getMessage());
+                                Toast.makeText(LoginActivity.this,e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                        progbar.setVisibility(View.GONE);
+                    }
+                });
+    }
+
+    private void Alertbox() {
+        //Setup the alert builder
+        AlertDialog.Builder builder=new AlertDialog.Builder(LoginActivity.this);
+        builder.setTitle("Email not verified");
+        builder.setMessage("Please verify your email now. You can not login without email verification.");
+
+        //Open email apps if user click continue button
+        builder.setPositiveButton("Continue", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                Intent intent=new Intent(Intent.ACTION_MAIN);
+                intent.addCategory(Intent.CATEGORY_APP_EMAIL);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);     //To open email app in new window
+                startActivity(intent);
+            }
+        });
+
+        //Create the AlertBox
+        AlertDialog alertDialog=builder.create();
+
+        //Show the AlertBox
+        alertDialog.show();
+    }
+
+    //Check if user is already logged in
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(authProfile.getCurrentUser()!=null)
+        {
+            //Redirecting to HomePage
+            Intent intent=new Intent(LoginActivity.this, RecordActivity.class);
+            startActivity(intent);
+            finish();
+        }
+    }
+}
+//
+package com.example.cardiocare;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.TextUtils;
+import android.util.Log;
+import android.util.Patterns;
+import android.view.View;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.Calendar;
+import java.util.regex.Pattern;
+
+public class RegisterActivity extends AppCompatActivity {
+
+    private EditText name,email,mobile,pass,repass,dob;
+    private TextView backbtn,gender;
+    private Button regbtn;
+    private ProgressBar progbar;
+    private RadioGroup gengrp;
+    private RadioButton genbtn;
+    private FirebaseAuth mAuth;
+    private DatePickerDialog picker;
+    private static final String TAG="RegisterActivity";
+
+    @SuppressLint("MissingInflatedId")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_register);
+        getSupportActionBar().hide();
+
+        mAuth = FirebaseAuth.getInstance();
+
+        name=findViewById(R.id.fullname);
+        email=findViewById(R.id.email);
+        mobile=findViewById(R.id.mobile);
+        pass=findViewById(R.id.pass);
+        repass=findViewById(R.id.repass);
+        dob=findViewById(R.id.dob);
+        gender=findViewById(R.id.gender);
+        progbar=findViewById(R.id.progbar);
+
+        //RadioButton for gender
+        gengrp=findViewById(R.id.genderbtn);
+        gengrp.clearCheck();
+
+        //Setting up DatePicker on EditText
+        dob.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Calendar cal=Calendar.getInstance();
+                int day=cal.get(Calendar.DAY_OF_MONTH);
+                int month=cal.get(Calendar.MONTH);
+                int year=cal.get(Calendar.YEAR);
+
+                //Date Picker Dialog
+                picker = new DatePickerDialog(RegisterActivity.this, new DatePickerDialog.OnDateSetListener() {
+                    @Override
+                    public void onDateSet(DatePicker view, int year, int month, int day) {
+                        dob.setText(day+"/"+(month+1)+"/"+year);
+                    }
+                },year,month,day);
+                picker.show();
+            }
+        });
+
+        backbtn=(TextView) findViewById(R.id.backloginbtn);
+        regbtn=(Button)findViewById(R.id.regbtn);
+
+        regbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int genid=gengrp.getCheckedRadioButtonId();
+                genbtn=findViewById(genid);
+
+                //Obtaining the entered data
+                String tname=name.getText().toString().trim();
+                String temail=email.getText().toString().trim();
+                String tmobile=mobile.getText().toString().trim();
+                String tpass=pass.getText().toString().trim();
+                String trepass=repass.getText().toString().trim();
+                String tdob=dob.getText().toString().trim();
+                String tgen;
+
+                if(TextUtils.isEmpty(tname))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please enter your full name",Toast.LENGTH_LONG).show();
+                    name.setError("Full name is required");
+                    name.requestFocus();
+                }
+                else if(TextUtils.isEmpty(temail))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please enter your email",Toast.LENGTH_LONG).show();
+                    email.setError("Email is required");
+                    email.requestFocus();
+                }
+                else if(!Patterns.EMAIL_ADDRESS.matcher(temail).matches())
+                {
+                    Toast.makeText(RegisterActivity.this,"Please re-enter your email",Toast.LENGTH_LONG).show();
+                    email.setError("Valid email is required");
+                    email.requestFocus();
+                }
+                else if(TextUtils.isEmpty(tdob))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please enter your date of birth",Toast.LENGTH_LONG).show();
+                    dob.setError("Date of birth is required");
+                    dob.requestFocus();
+                }
+                else if(TextUtils.isEmpty(tmobile))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please enter your mobile number",Toast.LENGTH_LONG).show();
+                    mobile.setError("Mobile number is required");
+                    mobile.requestFocus();
+                }
+                else if(tmobile.length()!=11)
+                {
+                    Toast.makeText(RegisterActivity.this,"Please re-enter your mobile number",Toast.LENGTH_LONG).show();
+                    mobile.setError("Mobile number should be 11 digits!");
+                    mobile.requestFocus();
+                }
+                else if(gengrp.getCheckedRadioButtonId()==-1)
+                {
+                    Toast.makeText(RegisterActivity.this,"Please select your gender",Toast.LENGTH_LONG).show();
+                }
+                else if(TextUtils.isEmpty(tpass))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please enter password",Toast.LENGTH_LONG).show();
+                    pass.setError("Password is required");
+                    pass.requestFocus();
+                }
+                else if(tpass.length()<6)
+                {
+                    Toast.makeText(RegisterActivity.this,"Password should be at least 6 digits!",Toast.LENGTH_LONG).show();
+                    pass.setError("Password is too weak!");
+                    pass.requestFocus();
+                }
+                else if(TextUtils.isEmpty(trepass))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please confirm your password",Toast.LENGTH_LONG).show();
+                    repass.setError("Password confirmation is required");
+                    repass.requestFocus();
+                }
+                else if(!tpass.equals(trepass))
+                {
+                    Toast.makeText(RegisterActivity.this,"Please re-confirm your password",Toast.LENGTH_LONG).show();
+                    repass.setError("Password not matched!");
+                    repass.requestFocus();
+
+                    //Clear the entered password
+                    pass.clearComposingText();
+                    repass.clearComposingText();
+                }
+                else
+                {
+                    tgen=genbtn.getText().toString().trim();
+                    progbar.setVisibility(View.VISIBLE);
+                    registeruser(tname,temail,tdob,tgen,tmobile,tpass);
+                }
+            }
+        });
+
+        backbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent=new Intent(RegisterActivity.this, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+
+    //Register user using the credentials given
+    private void registeruser(String tname, String temail, String tdob, String tgen, String tmobile, String tpass) {
+
+        //FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+        //Create User Profile
+        mAuth.createUserWithEmailAndPassword(temail,tpass).addOnCompleteListener(RegisterActivity.this,
+                new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful())
+                        {
+                            FirebaseUser user=mAuth.getCurrentUser();
+
+                            //Enter user data in Firebase Realtime Database
+                            Userdata userdata=new Userdata(tname,tdob,tgen,tmobile);
+
+                            //Extracting user reference from database for Registered users
+                            DatabaseReference profile = FirebaseDatabase.getInstance().getReference("Userdata");
+
+                            //Importing userdata to Realtime Database
+                            profile.child(user.getUid()).setValue(userdata).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if(task.isSuccessful()) {
+                                        //Send Verification Email
+//                                        user.sendEmailVerification();
+
+                                        Toast.makeText(RegisterActivity.this, "Registration Successful!", Toast.LENGTH_LONG).show();
+
+                                        mAuth.signOut();
+
+                                        //Back to login page
+                                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
+
+                                        //To prevent user from returning back to Register Activity on pressing back button after registration
+                                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                                | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                        startActivity(intent);
+
+                                        finish();               //To close Register Activity
+                                    }
+                                    else
+                                    {
+                                        Toast.makeText(RegisterActivity.this,"Registration Failed! Please try Again",
+                                                Toast.LENGTH_LONG).show();
+                                    }
+                                    progbar.setVisibility(View.GONE);
+                                }
+                            });
+                        }
+                        else
+                        {
+                            try{
+                                throw task.getException();
+                            }
+                            catch (FirebaseAuthInvalidCredentialsException e){
+                                email.setError("This email is invalid or already in use");
+                                email.requestFocus();
+                            }
+                            catch (FirebaseAuthUserCollisionException e){
+                                email.setError("User is already registered with this email! Use another email");
+                                email.requestFocus();
+                            }
+                            catch (Exception e){
+                                Log.e(TAG, e.getMessage());
+                                Toast.makeText(RegisterActivity.this,e.getMessage(), Toast.LENGTH_LONG).show();
+                            }
+                        }
+                        progbar.setVisibility(View.GONE);
+                    }
+                });
+    }
+}
+//
+package com.example.cardiocare;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+
+import com.google.firebase.FirebaseException;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
+
+import java.util.concurrent.TimeUnit;
+
+public class VerifyOTP1Activity extends AppCompatActivity {
+
+    EditText enternumber;
+    Button otpbtn;
+    ProgressBar progbar;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_verify_otp1);
+        getSupportActionBar().hide();
+
+        enternumber =findViewById(R.id.input_mobile_number);
+        otpbtn=findViewById(R.id.otpbtn);
+
+        progbar=findViewById(R.id.progbar);
+
+        otpbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!enternumber.getText().toString().trim().isEmpty()){
+                    if ((enternumber.getText().toString().trim()).length() == 11) {
+
+                        progbar.setVisibility(View.VISIBLE);
+                        otpbtn.setVisibility(View.INVISIBLE);
+
+                        PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                                "+88" + enternumber.getText().toString().trim(),
+                                30,
+                                TimeUnit.SECONDS,
+                                VerifyOTP1Activity.this,
+                                new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                                    @Override
+                                    public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
+                                        progbar.setVisibility(View.GONE);
+                                        otpbtn.setVisibility(View.VISIBLE);
+                                    }
+
+                                    @Override
+                                    public void onVerificationFailed(@NonNull FirebaseException e) {
+                                        progbar.setVisibility(View.GONE);
+                                        otpbtn.setVisibility(View.VISIBLE);
+                                        Toast.makeText(VerifyOTP1Activity.this,e.getMessage(),Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onCodeSent(@NonNull String otp, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
+                                        progbar.setVisibility(View.GONE);
+                                        otpbtn.setVisibility(View.VISIBLE);
+
+                                        Intent intent =new Intent(getApplicationContext(),VerifyOTP2Activity.class);
+                                        intent.putExtra("mobile", enternumber.getText().toString().trim());
+                                        intent.putExtra("OTP",otp);
+                                        startActivity(intent);
+                                    }
+                                }
+                        );
+
+                    }
+                    else
+                    {
+                        Toast.makeText(VerifyOTP1Activity.this, "Mobile number should be 11 digits!", Toast.LENGTH_SHORT).show();
+                    }
+                }
+                else
+                {
+                    Toast.makeText(VerifyOTP1Activity.this, "Enter Mobile Number!", Toast.LENGTH_SHORT).show();
+                    enternumber.setError("Mobile number required");
+                    enternumber.requestFocus();
+                }
+            }
+        });
+    }
+}
+//
+package com.example.cardiocare;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
+
+import java.util.concurrent.TimeUnit;
+
+public class VerifyOTP2Activity extends AppCompatActivity {
+
+    EditText input1,input2,input3,input4, input5,input6;
+    Button verifybtn;
+    String getOTP;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_verify_otp2);
+        getSupportActionBar().hide();
+
+        input1=findViewById(R.id.inputotp1);
+        input2=findViewById(R.id.inputotp2);
+        input3=findViewById(R.id.inputotp3);
+        input4=findViewById(R.id.inputotp4);
+        input5=findViewById(R.id.inputotp5);
+        input6=findViewById(R.id.inputotp6);
+
+        verifybtn=findViewById(R.id.verifybtn);
+        final ProgressBar progbar=findViewById(R.id.progbar);
+
+        TextView textView=findViewById(R.id.textmobile);
+        textView.setText(String.format("+88 %s",getIntent().getStringExtra("mobile")));
+
+        getOTP = getIntent().getStringExtra("OTP");
+
+        verifybtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(!input1.getText().toString().trim().isEmpty() && !input2.getText().toString().trim().isEmpty() &&
+                        !input3.getText().toString().trim().isEmpty() && !input4.getText().toString().trim().isEmpty() &&
+                        !input5.getText().toString().trim().isEmpty() && !input6.getText().toString().trim().isEmpty())
+                {
+
+                    String enterOTP = input1.getText().toString().trim()+input2.getText().toString().trim()+input3.getText().toString().trim()+
+                                        input4.getText().toString().trim()+input5.getText().toString().trim()+input6.getText().toString().trim();
+
+                    if(getOTP!=null)
+                    {
+                        progbar.setVisibility(View.VISIBLE);
+                        verifybtn.setVisibility(View.INVISIBLE);
+
+                        PhoneAuthCredential phoneAuthCredential = PhoneAuthProvider.getCredential(
+                                getOTP,enterOTP
+                        );
+                        FirebaseAuth.getInstance().signInWithCredential(phoneAuthCredential)
+                                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<AuthResult> task) {
+                                        progbar.setVisibility(View.GONE);
+                                        verifybtn.setVisibility(View.VISIBLE);
+
+                                        if(task.isSuccessful())
+                                        {
+                                            Toast.makeText(VerifyOTP2Activity.this, "Verified! Login Successful!", Toast.LENGTH_LONG).show();
+                                            Intent intent=new Intent(VerifyOTP2Activity.this, RecordActivity.class);
+
+                                            //To prevent user from returning back to Login Activity on pressing back button after Login
+                                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                                                    | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                            startActivity(intent);
+
+                                            finish();               //To close Login Activity
+                                        }
+                                        else
+                                        {
+                                            Toast.makeText(VerifyOTP2Activity.this, "Enter the correct OTP!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                    }
+                    else
+                    {
+                        Toast.makeText(VerifyOTP2Activity.this, "Something went wrong. Please check internet connection!", Toast.LENGTH_SHORT).show();
+                    }
+                    Toast.makeText(VerifyOTP2Activity.this, "OTP Verifying", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    Toast.makeText(VerifyOTP2Activity.this, "Please enter all number!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+        
+        numberotpmove();
+
+        findViewById(R.id.resend).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PhoneAuthProvider.getInstance().verifyPhoneNumber(
+                        "+88" + getIntent().getStringExtra("mobile"),
+                        30,
+                        TimeUnit.SECONDS,
+                        VerifyOTP2Activity.this,
+                        new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                            @Override
+                            public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
+
+                            }
+
+                            @Override
+                            public void onVerificationFailed(@NonNull FirebaseException e) {
+
+                                Toast.makeText(VerifyOTP2Activity.this,e.getMessage(),Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onCodeSent(@NonNull String newotp, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
+
+                                getOTP=newotp;
+                                Toast.makeText(VerifyOTP2Activity.this,"Resending OTP Successful!",Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                );
+            }
+        });
+    }
+
+    private void numberotpmove() {
+
+        input1.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(!s.toString().trim().isEmpty())
+                {
+                    input2.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        input2.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(!s.toString().trim().isEmpty())
+                {
+                    input3.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        input3.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(!s.toString().trim().isEmpty())
+                {
+                    input4.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        input4.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(!s.toString().trim().isEmpty())
+                {
+                    input5.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        input5.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(!s.toString().trim().isEmpty())
+                {
+                    input6.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+    }
+}
+//
+package com.example.cardiocare;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+
+import com.example.cardiocare.databinding.ActivitySplashBinding;
+
+public class SplashActivity extends AppCompatActivity {
+    ActivitySplashBinding binding;
+    Animation topAni,botAni;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding=ActivitySplashBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        getSupportActionBar().hide();
+
+        topAni= AnimationUtils.loadAnimation(this,R.anim.top_animation);
+        botAni=AnimationUtils.loadAnimation(this,R.anim.bottom_animation);
+        binding.appicon.setAnimation(topAni);
+        binding.appname.setAnimation(botAni);
+
+
+        //create object of Handler class object
+        Handler handler=new Handler();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Intent intent=new Intent(SplashActivity.this,WelcomeActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        },5000);
+    }
+}
+//
+package com.example.cardiocare;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+
+public class WelcomeActivity extends AppCompatActivity {
+
+    private Button btn;
+    private TextView txt;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_welcome);
+        getSupportActionBar().hide();
+
+        //Check if application is opened for the first time
+        SharedPreferences preferences=getSharedPreferences("PREFERENCE",MODE_PRIVATE);
+        String FirstTime=preferences.getString("FirstTimeInstall","");
+
+        if(FirstTime.equals("yes"))
+        {
+            Intent intent=new Intent(WelcomeActivity.this, LoginActivity.class);
+            startActivity(intent);
+            finish();
+        }
+        else
+        {
+            SharedPreferences.Editor editor=preferences.edit();
+            editor.putString("FirstTimeInstall","yes");
+            editor.apply();
+
+            //If App is opened for the first time
+            getSupportActionBar().hide();
+
+            btn=(Button) findViewById(R.id.getstart);
+            txt=(TextView) findViewById(R.id.skip);
+
+            btn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent=new Intent(WelcomeActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            });
+
+            txt.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Intent intent=new Intent(WelcomeActivity.this, LoginActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+            });
+        }
+    }
+}
+//
+package com.example.cardiocare;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Helpers {
+
+    static  public  String getStatus(int systolicPressure, int diastolicPressure){
+        if(systolicPressure<=90 && diastolicPressure<=60) {
+            return "Low";
+        }else if(systolicPressure<=120 && diastolicPressure<=80){
+            return "Normal";
+        }else if(systolicPressure>120 && systolicPressure<130 && diastolicPressure<=80){
+            return "High";
+        }else if(systolicPressure>=130 && systolicPressure<140 && diastolicPressure>=80 && diastolicPressure<=89){
+            return "High(stage 1)";
+        }else if(systolicPressure>=140  && diastolicPressure>=90){
+            return "High(stage 2)";
+        }else{
+            return "Unusual";
+        }
+    }
+    static public String getStatusColor(int systolicPressure,int diastolicPressure){
+        String status = getStatus(systolicPressure, diastolicPressure);
+        switch (status){
+            case "Low":
+                return "#F6A758";
+            case "Normal":
+                return "#00C897";
+            case "High":
+                return "#F6A758";
+            case "High(stage 1)":
+                return "#FB5858";
+            case "High(stage 2)":
+                return "#FB5858";
+            default:
+                return "#F3683C";
+        }
+    }
+    static public List<Record> getRecordsFromDB(Context context){
+        SharedPreferences sharedPreferences =
+                context.getSharedPreferences("shared",Context.MODE_PRIVATE);
+        Gson gson = new Gson();
+        String jsonString = sharedPreferences.getString("records","[]");
+        Type type = new TypeToken<ArrayList<Record>>(){}.getType();
+        return gson.fromJson(jsonString,type);
+    }
+
+    static public void setRecordsToDB(Context context,List<Record> records){
+        SharedPreferences sharedPreferences =
+                context.getSharedPreferences("shared",Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor =sharedPreferences.edit();
+        Gson gson = new Gson();
+        String jsonString = gson.toJson(records);
+        editor.putString("records",jsonString);
+        editor.apply();
+    }
+
+}
+
+
+//
+package com.example.cardiocare;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Bundle;
+
+public class HomeActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
+    }
+}
+//
+package com.example.cardiocare;
+
+import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
+import android.content.Intent;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.View;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
+import android.widget.TimePicker;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.android.material.textfield.TextInputLayout;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
+
+public class InsertRecordActivity extends AppCompatActivity {
+
+    EditText sysPressure,diaPressure,heartRate,timeMeasured,dateMeasured,comment;
+    Button saveButton;
+    TextInputLayout dateMeasuredLayout,timeMeasuredLayout;
+    final Calendar calendar = Calendar.getInstance();
+    int hr,min;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_insert_record);
+        getSupportActionBar().hide();
+
+        //connecting widgets
+        saveButton = findViewById(R.id.coe_record_action_button);
+        sysPressure = findViewById(R.id.coe_record_systolic_edit_text_input);
+        diaPressure = findViewById(R.id.coe_record_diastolic_edit_text_input);
+        heartRate = findViewById(R.id.coe_record_heart_rate_edit_text_input);
+        timeMeasured= findViewById(R.id.coe_record_time_measured_edit_text_input);
+        dateMeasured = findViewById(R.id.coe_record_date_edit_text_input);
+        comment = findViewById(R.id.coe_record_comment_edit_text_input);
+        dateMeasuredLayout  = findViewById(R.id.coe_record_date_edit_text_layout);
+        timeMeasuredLayout  = findViewById(R.id.coe_record_time_measured_edit_text_layout);
+
+        Intent intent = getIntent();
+        //checking if the activity should in in update or create mode depending on t he availability of intent extra
+        if(intent.hasExtra("index")){
+            int index = intent.getIntExtra("index",-1);
+//            Toast.makeText(this, String.valueOf(index), Toast.LENGTH_SHORT).show();
+            RecordList recordList = RecordList.getInstance();
+            if(index != -1 && index<recordList.getCount()){
+                //load data
+                Record record = recordList.getRecord(index);
+                sysPressure.setText(String.valueOf(record.getSystolicPressure()));
+                diaPressure.setText(String.valueOf(record.getDiastolicPressure()));
+                heartRate.setText(String.valueOf(record.getHeartRate()));
+                //parsing values of time
+                String[] tempTime = record.getTimeMeasured().split(":",2);
+                hr = Integer.parseInt(tempTime[0]);
+                min = Integer.parseInt(tempTime[1]);
+                timeMeasured.setText(record.getTimeMeasured());
+                //parsing values of date
+                String[] tempDate= record.getDateMeasured().split("-",3);
+                calendar.set(Integer.parseInt(tempDate[2]),Integer.parseInt(tempDate[1]),Integer.parseInt(tempDate[0]));
+                dateMeasured.setText(record.getDateMeasured());
+                comment.setText(String.valueOf(record.getComment()));
+            }else{
+                Toast.makeText(this, "Invalid operation request", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        //listening to change and checking the range of 90-140
+        sysPressure.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(charSequence.length()!=0){
+                    int temp =  Integer.parseInt(charSequence.toString());
+                    if(temp<50 || temp>250){
+                        sysPressure.setError("should be in range: 50-250");
+                    }
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        //listening to change and checking the range of 60-90
+        diaPressure.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                if(charSequence.toString().trim().length()!=0){
+                    int temp =  Integer.parseInt(charSequence.toString());
+                    if(temp<50 || temp>150){
+                        diaPressure.setError("Should be in range: 50-150");
+                    }
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        //initiating date picker
+        DatePickerDialog.OnDateSetListener dateSetListener  = new DatePickerDialog.OnDateSetListener() {
+            @Override
+            public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                calendar.set(year,month,day);
+                updateDateData();
+            }
+        };
+
+        //initiating time picker
+        TimePickerDialog.OnTimeSetListener timeSetListener = new TimePickerDialog.OnTimeSetListener() {
+            @Override
+            public void onTimeSet(TimePicker timePicker, int _hr, int _min) {
+                hr = _hr;
+                min = _min;
+                updateTimeData();
+            }
+        };
+
+        dateMeasuredLayout.setEndIconOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new DatePickerDialog(InsertRecordActivity.this,
+                        dateSetListener,
+                        calendar.get(Calendar.YEAR),
+                        calendar.get(Calendar.MONTH),
+                        calendar.get(Calendar.DAY_OF_MONTH)
+                ).show();
+            }
+        });
+        //validating the custom input of date measured
+        dateMeasured.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String str = charSequence.toString().trim();
+                //checking the format validity of the input
+                if(str.length()==10){
+                    String[]temp = str.split("-",3);
+                    if(temp.length==3){
+                        if(Integer.parseInt(temp[0])>31 || Integer.parseInt(temp[0])<1){
+                            dateMeasured.setError("Day should be in range: 1-31");
+                        }else if(Integer.parseInt(temp[1])>12 || Integer.parseInt(temp[1])<1){
+                            dateMeasured.setError("Month should be in range: 1-12");
+                        }else if(Integer.parseInt(temp[2])==0){
+                            dateMeasured.setError("Illegal entry");
+                        }else{
+                            calendar.set(Integer.parseInt(temp[2]),Integer.parseInt(temp[1])-1,Integer.parseInt(temp[0]));
+                        }
+                    }else{
+                        dateMeasured.setError("Illegal format");
+                    }
+                }else{
+                    dateMeasured.setError("Illegal format");
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        timeMeasuredLayout.setEndIconOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new TimePickerDialog(InsertRecordActivity.this,timeSetListener,hr,min,true).show();
+            }
+        });
+        //validating the custom input of time measured
+        timeMeasured.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                String str = charSequence.toString().trim();
+                //checking the format validity of the input
+                if(str.length()>=3 && str.length()<=5){
+                    String[]temp = str.split(":");
+                    if(temp.length==2){
+                        if(Integer.parseInt(temp[0])>24 || Integer.parseInt(temp[0])<0){
+                            timeMeasured.setError("Hour should be in range: 0-24");
+                        }else if(Integer.parseInt(temp[1])>60 || Integer.parseInt(temp[1])<0){
+                            timeMeasured.setError("Minutes should be in range: 0-60");
+                        }else{
+                            hr = Integer.parseInt(temp[0]);
+                            min = Integer.parseInt(temp[1]);
+                        }
+                    }else{
+                        timeMeasured.setError("Illegal format");
+                    }
+                }else{
+                    timeMeasured.setError("Illegal format");
+                }
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+
+            }
+        });
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NotifyDataSetChanged")
+            @Override
+            public void onClick(View view) {
+                if(sysPressure.getError()==null
+                        && diaPressure.getError()==null
+                        && timeMeasured.getError()==null
+                        && dateMeasured.getError()==null
+                ){
+                    //save in database
+
+                    String format = "dd-MM-yyyy";
+                    SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.getDefault());
+                    if(intent.hasExtra("index")){
+                        //update
+                        int position = intent.getIntExtra("index",-1);
+                        RecordList.getInstance().updateRecord(position,new Record(
+                                Integer.parseInt(sysPressure.getText().toString().trim()),
+                                Integer.parseInt(diaPressure.getText().toString().trim()),
+                                Integer.parseInt(heartRate.getText().toString().trim()),
+                                timeMeasured.getText().toString().trim(),
+                                dateFormat.format(calendar.getTime()),
+                                comment.getText().toString().trim()));
+//                        RecordActivity.recordListAdaptor.notifyItemChanged(position);
+                        RecordActivity.recordListAdaptor.notifyItemChanged(position, RecordList.getInstance().getRecord(position));
+                        Toast.makeText(InsertRecordActivity.this,"Record updated successfully!", Toast.LENGTH_SHORT).show();
+                    }else{
+                        RecordList.getInstance().addRecord(new Record(
+                                Integer.parseInt(sysPressure.getText().toString().trim()),
+                                Integer.parseInt(diaPressure.getText().toString().trim()),
+                                Integer.parseInt(heartRate.getText().toString().trim()),
+                                timeMeasured.getText().toString().trim(),
+                                dateFormat.format(calendar.getTime()),
+                                comment.getText().toString().trim()
+                        ));
+
+
+                        RecordActivity.recordListAdaptor.notifyItemInserted( RecordList.getInstance().getCount()-1);
+                        Toast.makeText(InsertRecordActivity.this,"Record created successfully!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    //saving in database
+                    Helpers.setRecordsToDB(InsertRecordActivity.this,RecordList.getInstance().getRecords());
+                    finish();
+                    RecordActivity.setTotal();
+
+                }else{
+                    //checking error in data
+                    Toast.makeText(InsertRecordActivity.this,"Invalid data", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
+
+    }
+
+    //set formatted text
+    private void updateDateData() {
+        String format = "dd-MM-yyyy";
+        SimpleDateFormat dateFormat = new SimpleDateFormat(format, Locale.getDefault());
+        dateMeasured.setText(dateFormat.format(calendar.getTime()));
+    }
+
+    //set formatted text
+    private void updateTimeData() {
+        String temp = String.valueOf(hr)+":"+String.valueOf(min);
+        timeMeasured.setText(temp);
+    }
+
+
+}
+//
+package com.example.cardiocare;
+
+public class Record {
+    private int systolicPressure,diastolicPressure,heartRate;
+    private String timeMeasured,dateMeasured,comment;
+
+    public Record(int systolicPressure,
+                  int diastolicPressure,
+                  int heartRate,
+                  String timeMeasured,
+                  String dateMeasured,
+                  String comment) {
+        this.systolicPressure = systolicPressure;
+        this.diastolicPressure = diastolicPressure;
+        this.heartRate = heartRate;
+        this.timeMeasured = timeMeasured;
+        this.dateMeasured = dateMeasured;
+        this.comment = comment;
+    }
+    public Record(Record record){
+        systolicPressure = record.getSystolicPressure();
+        diastolicPressure = record.getDiastolicPressure();
+        heartRate = record.getHeartRate();
+        timeMeasured = record.getTimeMeasured();
+        dateMeasured = record.getDateMeasured();
+        comment = record.getComment();
+    }
+
+    public int getSystolicPressure() {
+        return systolicPressure;
+    }
+
+    public void setSystolicPressure(int systolicPressure) {
+        this.systolicPressure = systolicPressure;
+    }
+
+    public int getDiastolicPressure() {
+        return diastolicPressure;
+    }
+
+    public void setDiastolicPressure(int diastolicPressure) {
+        this.diastolicPressure = diastolicPressure;
+    }
+
+    public int getHeartRate() {
+        return heartRate;
+    }
+
+    public void setHeartRate(int heartRate) {
+        this.heartRate = heartRate;
+    }
+
+    public String getTimeMeasured() {
+        return timeMeasured;
+    }
+
+    public void setTimeMeasured(String timeMeasured) {
+        this.timeMeasured = timeMeasured;
+    }
+
+    public String getDateMeasured() {
+        return dateMeasured;
+    }
+
+    public void setDateMeasured(String dateMeasured) {
+        this.dateMeasured = dateMeasured;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+}
+//
+package com.example.cardiocare;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.dialog.MaterialDialogs;
+import com.google.firebase.auth.FirebaseAuth;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class RecordActivity extends AppCompatActivity implements RecordListListeners {
+
+    RecyclerView recyclerView;
+    Button createButton;
+    RecordList recordList = RecordList.getInstance();
+    static public RecordListAdaptor recordListAdaptor;
+    static TextView totalText;
+    static ImageView imageView, signout;
+    Context context;
+    private FirebaseAuth authProfile;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_record);
+        getSupportActionBar().hide();
+
+
+        recyclerView = findViewById(R.id.main_recycler_view);
+        createButton = findViewById(R.id.main_create_button);
+        totalText = findViewById(R.id.activity_main_total);
+        imageView = findViewById(R.id.activity_main_empty_image);
+        signout=findViewById(R.id.signout);
+        authProfile=FirebaseAuth.getInstance();
+        context = this;
+
+        recordList.setRecords(Helpers.getRecordsFromDB(RecordActivity.this));
+
+        recordListAdaptor = new RecordListAdaptor(this,recordList.getRecords(),this);
+        recyclerView.setAdapter(recordListAdaptor);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        createButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(RecordActivity.this,InsertRecordActivity.class);
+                startActivity(intent);
+            }
+        });
+
+
+
+        setTotal();
+
+        signout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                authProfile.signOut();
+                Toast.makeText(RecordActivity.this,"Signed Out",Toast.LENGTH_LONG).show();
+                Intent intent=new Intent(RecordActivity.this,LoginActivity.class);
+
+                //Clear all stacks
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                finish();               //Close ProfileActivity
+            }
+        });
+
+    }
+    @SuppressLint("SetTextI18n")
+    static void setTotal(){
+        if(RecordList.getInstance().getCount()==0){
+            imageView.setVisibility(View.VISIBLE);
+        }else{
+            imageView.setVisibility(View.GONE);
+        }
+        totalText.setText("Total results found: "+String.valueOf(RecordList.getInstance().getCount()));
+    }
+
+
+    @Override
+    public void onRecordDeleteListener(int position) {
+        showDeleteDialog(position);
+    }
+
+    private void showDeleteDialog(int position){
+
+        final AlertDialog.Builder alert = new AlertDialog.Builder(RecordActivity.this);
+        View view = getLayoutInflater().inflate(R.layout.record_delete_dialog_layout,null);
+        Button confirmButton,cancelButton;
+        confirmButton = view.findViewById(R.id.delete_record_dialog_confirm_button);
+        cancelButton = view.findViewById(R.id.delete_record_dialog_cancel_button);
+        alert.setView(view);
+        final AlertDialog alertDialog = alert.create();
+        alertDialog.setCanceledOnTouchOutside(true);
+        alertDialog.show();
+        //Delete the record
+        confirmButton.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NotifyDataSetChanged")
+            @Override
+            public void onClick(View view) {
+                //deleting the item
+                RecordList.getInstance().deleteRecord(position);
+                //notifying the listener
+                recordListAdaptor.notifyItemRemoved(position);
+                recordListAdaptor.notifyItemRangeChanged(position,RecordList.getInstance().getCount());
+                //showing a toast to the user
+                Toast.makeText(RecordActivity.this, "Record deleted successfully!", Toast.LENGTH_SHORT).show();
+                //dismissing the alert
+                alertDialog.dismiss();
+                //setting total text
+                setTotal();
+                //saving data to database
+                Helpers.setRecordsToDB(RecordActivity.this,RecordList.getInstance().getRecords());
+            }
+        });
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                alertDialog.dismiss();
+            }
+        });
+    }
+
+}
+//
+package com.example.cardiocare;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+public class RecordDetailsActivity extends AppCompatActivity {
+    TextView sysPressure,diaPressure,heartRate,timeMeasured,dateMeasured,comment;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_record_details);
+        getSupportActionBar().hide();
+
+        sysPressure = findViewById(R.id.activity_record_details_sys_pressure);
+        diaPressure = findViewById(R.id.activity_record_details_dia_pressure);
+        heartRate = findViewById(R.id.activity_record_details_heart_rate);
+        timeMeasured = findViewById(R.id.activity_record_details_time_measured);
+        dateMeasured = findViewById(R.id.activity_record_details_date_measured);
+        comment= findViewById(R.id.activity_record_details_comment);
+
+        Intent intent = getIntent();
+        //getting the record details from recordList
+        if(intent.hasExtra("index")) {
+            int index = intent.getIntExtra("index", -1);
+            if (index > -1 && index < RecordList.getInstance().getCount()) {
+                Record record = RecordList.getInstance().getRecord(index);
+                sysPressure.setText(String.valueOf(record.getSystolicPressure()) + " mmHg");
+                diaPressure.setText(String.valueOf(record.getDiastolicPressure()) + " mmHg");
+                heartRate.setText(String.valueOf(record.getHeartRate()) + " bits/min");
+                timeMeasured.setText(record.getTimeMeasured());
+                dateMeasured.setText(record.getDateMeasured());
+                comment.setText(String.valueOf(record.getComment()));
+            } else {
+                Toast.makeText(this, "Invalid operation request", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+}
+//
+package com.example.cardiocare;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+
+/**
+ * This is a class that keeps track of a list of Record objects
+ * This uses singleton approach to ensure data consistency
+ */
+public class RecordList {
+    private static RecordList recordList_instance = null;
+    private List<Record> records = new ArrayList<>();
+    private RecordList(){}
+
+    /**
+     * This is a method to ensure single instance of the class
+     * @return RecordList
+     */
+    public static RecordList getInstance(){
+        if(recordList_instance==null){
+            recordList_instance = new RecordList();
+        }
+        return recordList_instance;
+    }
+
+    /**
+     * This is a method to get the list of records
+     * @return recordList
+     */
+    public List<Record> getRecords() {
+        return records;
+    }
+
+    /**
+     * This is a method to get the list of records in sorted order based on systolic pressure
+     * @param sortBySystolicPressure
+     * @return recordList
+     */
+    public List<Record> getRecords(boolean sortBySystolicPressure){
+        if(sortBySystolicPressure){
+            Collections.sort(records, new RecordComparatorOnSystolicPressure());
+        }
+        return records;
+    }
+
+    /**
+     * This is a method to get a particular record from the  list of records
+     * @return Record
+     */
+    public Record getRecord(int position) {
+        if(position>=0 && position<records.size()){
+            return records.get(position);
+        }else{
+            throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * This is a method to get a the size of the recordList
+     * @return size of th list
+     */
+    public int getCount() {
+        return records.size();
+    }
+
+    /**
+     * This is a method to set the list of records
+     * @param records
+     */
+    public void setRecords(List<Record> records) {
+        this.records = records;
+    }
+
+    /**
+     * This is a method to add a record to the list of records
+     * Throws exception on same entry
+     * @param record
+     */
+    public void addRecord(Record record){
+        if(records.contains(record)){
+            throw new IllegalArgumentException();
+        }else{
+            records.add(record);
+        }
+    }
+
+    /**
+     * This is a method to update a particular record
+     * Throws exception on invalid position
+     * @param record, position
+     */
+    public void updateRecord(int position,Record record){
+        if(records.size()>position && position>=0){
+            records.set(position,record);
+        }else{
+            throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * This is a method to delete a particular record
+     *  Throws exception on invalid position
+     * @param position
+     */
+    public void  deleteRecord(int position){
+        if(records.size()>position && position>=0){
+            records.remove(position);
+        }else{
+            throw new IllegalArgumentException();
+        }
+    }
+
+    /**
+     * This is a method to delete all records
+     */
+    public void deleteAllRecords(){
+        records.clear();
+    }
+}
+//
+package com.example.cardiocare;
+
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class RecordListAdaptor extends RecyclerView.Adapter<RecordListAdaptor.RecordListViewHolder> {
+
+    List<Record> records = new ArrayList<>();
+    Context context;
+    private RecordListListeners recordListListeners;
+
+    /**
+     * This is a constructor to for the adaptor
+     * @param context, records, recordListListener
+     */
+    public RecordListAdaptor(Context context, List<Record> records, RecordListListeners recordListListeners) {
+        this.records = records;
+        this.context = context;
+        this.recordListListeners = recordListListeners;
+    }
+
+    /**
+     * This is a method to for the adaptor
+     * @param parent, viewType
+     *                This binds the layout to the recycler view
+     */
+    @NonNull
+    @Override
+    public RecordListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View view = inflater.inflate(R.layout.record_recycler_item_view,parent,false);
+        return new RecordListViewHolder(view);
+    }
+
+    /**
+     * This is a method to for the adaptor
+     * @param holder, position
+     *                This allows to access the views and do certain operations
+     */
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onBindViewHolder(@NonNull RecordListViewHolder holder, @SuppressLint("RecyclerView") int position) {
+        holder.dateMeasured.setText(records.get(position).getDateMeasured());
+        holder.sysPressure.setText(records.get(position).getSystolicPressure()+" mmHg");
+        holder.diaPressure.setText(records.get(position).getDiastolicPressure()+" mmHg");
+        holder.heartRate.setText(records.get(position).getHeartRate()+" bits/min");
+        holder.status.setText(Helpers.getStatus(
+                records.get(position).getSystolicPressure(),
+                records.get(position).getDiastolicPressure()));
+        holder.statusBackground.setBackgroundColor(Color.parseColor(Helpers.getStatusColor(
+                records.get(position).getSystolicPressure(),
+                records.get(position).getDiastolicPressure())));
+
+        //on details record click
+        holder.viewButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(context, RecordDetailsActivity.class);
+                intent.putExtra("index",position);
+
+                context.startActivity(intent);
+            }
+        });
+
+        //on edit record click
+        holder.editButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+//                Toast.makeText(context, "okay" + String.valueOf(position), Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(context, InsertRecordActivity.class);
+
+                intent.putExtra("index",position);
+                context.startActivity(intent);
+            }
+        });
+
+        //on delete record click
+        holder.deleteButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                recordListListeners.onRecordDeleteListener(position);
+            }
+        });
+    }
+
+    /**
+     * This is a method to get the size of the list in the adaptor
+     *       This allows to access the views and do certain operations
+     */
+
+    @Override
+    public int getItemCount() {
+        return records.size();
+    }
+
+    /**
+     * This is a class to connect the views with the local variables
+     */
+    public class RecordListViewHolder extends RecyclerView.ViewHolder{
+        TextView sysPressure,diaPressure,heartRate,dateMeasured,status;
+        Button editButton,deleteButton,viewButton;
+        ConstraintLayout statusBackground;
+        public RecordListViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            //connecting views by their ids
+            sysPressure = itemView.findViewById(R.id.r_r_v_i_systolic_data);
+            diaPressure = itemView.findViewById(R.id.r_r_v_i_diastolic_data);
+            heartRate = itemView.findViewById(R.id.r_r_v_i_heart_rate_data);
+            dateMeasured= itemView.findViewById(R.id.r_r_v_i_dateMeasured);
+            statusBackground = itemView.findViewById(R.id.r_r_v_i_status_background);
+            status = itemView.findViewById(R.id.r_r_v_i_status_data);
+            viewButton = itemView.findViewById(R.id.r_r_v_i_view_button);
+            editButton = itemView.findViewById(R.id.r_r_v_i_edit_button);
+            deleteButton = itemView.findViewById(R.id.r_r_v_i_delete_button);
+
+        }
+    }
+
+}
+
+//
+package com.example.cardiocare;
+
+public class Userdata {
+    public String Name,Dob,Gender,Mobile;
+
+    //Empty Constructor
+    public Userdata(){};
+
+    public Userdata(String name, String dob, String gender, String mobile) {
+        this.Name = name;
+        this.Dob = dob;
+        this.Gender = gender;
+        this.Mobile = mobile;
+    }
+}
+//
