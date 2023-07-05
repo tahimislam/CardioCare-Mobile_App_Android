@@ -1,0 +1,50 @@
+<resources>
+    <string name="app_name">CardioCare</string>
+    <string name="forgot_password"><u>Forgot Password?</u></string>
+    <string name="register_here"><u>Register Here</u></string>
+    <string name="already_have_an_account"><u>Already have an Account?</u></string>
+    <string name="resend">RESEND OTP</string>
+
+
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="intro_title_1">Hey buddy</string>
+    <string name="intro_title_2">Record and track</string>
+    <string name="intro_desc_1">Let\'s take care of your heart which is meant to beat for someone</string>
+    <string name="intro_desc_2">Note the details of heart rate and lead a happy and healthy life</string>
+    <string name="next_text">Next</string>
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="systolic_pressure">Systolic pressure (mmHg)</string>
+    <string name="diastolic_pressure">Diastolic pressure (mmHg)</string>
+    <string name="heart_rate">Heart rate (bits/min)</string>
+    <string name="time_measured">Time measured (hh:mm)</string>
+    <string name="date_measured">Date measured (dd-mm-yyyy)</string>
+    <string name="comment">Comment (optional)</string>
+    <string name="create_record">#Create Record</string>
+    <string name="save">Save</string>
+    <string name="history">#History</string>
+    <string name="create">Create</string>
+    <string name="date_measured_p">Date measured</string>
+    <string name="systolic">Systolic:</string>
+    <string name="diastolic">Diastolic:</string>
+    <string name="heart_rate_p">Heart rate:</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="record_details">#Record details</string>
+    <string name="back">Back</string>
+    <string name="time_measured_p">Time measured:</string>
+    <string name="date_measured_p_1">Date measured:</string>
+    <string name="comment_p">Comment:</string>
+    <string name="delete_this_record">Delete this record?</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+</resources>
